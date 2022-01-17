@@ -1,4 +1,7 @@
-$.get("https://opentdb.com/api.php?amount=10").then(function (q) {
-    console.log(q);
-    $("body").text(JSON.stringify(q, '\n'));
-});
+$(document).ready(function () {
+    $("#lets-play-button").on("click", function (e) {
+        $(e.target).toggle();           //eltünteti azt az elemet amire kattintottunk -> "let's play" gombot
+        $("#start-game-form-section").toggle();     //megjeleníti a "loading..." feliratot
+        $("#game-section").toggle();                //megjeleníti a játék section-t
+    });
+})
