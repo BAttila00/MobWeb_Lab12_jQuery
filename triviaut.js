@@ -26,7 +26,8 @@ $(document).ready(function () {
         correctAnswerIndex = Math.floor(Math.random() * 4);
         const answers = question.incorrect_answers.slice();
         answers.splice(correctAnswerIndex, 0, question.correct_answer);
-        $(".answer .correct, .answer .incorrect").hide();
+        $('.answer').prop( "disabled", false );
+        $(".answer .correct, .answer .incorrect, #next-question").hide();
         console.log(answers);
 
         //convert answers from base64
@@ -53,12 +54,41 @@ $(document).ready(function () {
             $(`.answer[data-answer-index='${index}']`).show();
         }
 
+        //Ez nem jó, mert itt a "this" nem a kattintott elemre mutat
+        // $(".answer").on("click", event => {
+        //     console.log($(this).attr('data-answer-index'));
+        // });
+
+
+        $(".answer").on("click", event => {        //Arrof function esetén nincs saját this ezért a $(this).attr(...) nem működik
+
+            //var clickedAnswerIndex = event2.target.getAttribute('data-answer-index');     //ez néha "null" értéket adott vissza. Rájöttem h akkor ha ha nem a gombra kattintottam,
+            //hanem a benne lévő szövegre, azaz a gomb gyerekére. A lenti link megoldotta a problémát. Ki kellett cserélni "target"-et "currentTarget"-re.
+            //https://forums.meteor.com/t/solved-getting-click-event-data-is-null-when-clicking-child-element/50660
+            var clickedAnswerIndex = event.currentTarget.getAttribute('data-answer-index');
+            console.log(clickedAnswerIndex);
+            if(clickedAnswerIndex == correctAnswerIndex){
+                $(event.currentTarget.getElementsByClassName('correct')).show();
+            }
+            else {
+                $(event.currentTarget.getElementsByClassName('incorrect')).show();
+                $(`.answer[data-answer-index='${correctAnswerIndex}'] .correct`).show();
+            }
+            $('.answer').prop( "disabled", true );
+            $("#next-question").show();
+        });
+
+        //így is elérhetjük a kattintott elem egy attribútumát
+        // $('.answer').click(function() {
+        //     console.log($(this).attr('data-answer-index'));
+        // });
+
     }
 
     //...
     $.get("start-game-form-contents.html").then(html => $("#start-game-form").html(html)    //betölti a start-game-form-contents.html fájl tartalmát a játék paraméter választó formjába (start-game-form)
-        .on("submit", e => { // közvetlenül a HTML beszúrása után lácolhatjuk a 'submit' eseményre történő feliratkozást   //itt iratkozunk fel a "Go!" button lenyomásra
-            e.preventDefault(); // a böngésző alapértelmezett működését megállítjuk, amivel újratöltené az oldalt
+        .on("submit", event => { // közvetlenül a HTML beszúrása után lácolhatjuk a 'submit' eseményre történő feliratkozást   //itt iratkozunk fel a "Go!" button lenyomásra
+            event.preventDefault(); // a böngésző alapértelmezett működését megállítjuk, amivel újratöltené az oldalt
             $("#start-game-form button[type='submit']").attr("disabled", true); // a Go! gombot letiltjuk, hogy ne lehessen újra API kérést indítani, amíg meg nem érkezett a válasz
             var queryString = "";
             queryString = "https://opentdb.com/api.php?type=multiple&encode=base64&amount=" + $("[name='trivia_amount']").val() +
@@ -75,5 +105,8 @@ $(document).ready(function () {
                 getNextQuestion();
             });
             $("#start-game-form-section").hide();
+            $("#next-question").on("click", () => {  
+                getNextQuestion();
+            });
         }));
 })
