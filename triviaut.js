@@ -14,11 +14,50 @@ $(document).ready(function () {
 
     // a globális névtérben deklaráljuk az alábbi változókat és függvényt:
     let remainingQuestions, totalQuestions, currentQuestion, correctAnswerIndex;
-    function getNextQuestion() { }
+    function getNextQuestion() {
+        currentQuestion++;
+        const question = remainingQuestions.pop();
+        if (question === undefined) {
+            // TODO: nincs több kérdés!
+            return;
+        }
+
+        //A válaszok összeállítása egy tömbbe
+        correctAnswerIndex = Math.floor(Math.random() * 4);
+        const answers = question.incorrect_answers.slice();
+        answers.splice(correctAnswerIndex, 0, question.correct_answer);
+        $(".answer .correct, .answer .incorrect").hide();
+        console.log(answers);
+
+        //convert answers from base64
+        var decodedAnswers = [];
+        for (const element of answers) {
+            decodedAnswers.push(atob(element)); 
+        }
+        console.log(decodedAnswers);
+
+        //convert question frome base64
+        var decodedQuestion = atob(question.question);
+        console.log(decodedQuestion);
+
+        $("#current-question-number").text(currentQuestion);
+        $("#question-category").text(atob(question.category));
+        $("#question-difficulty").text(atob(question.difficulty));
+        $("#question-text").text(decodedQuestion);
+
+        //válaszok szövegének beállítása
+        $(".answer").hide();
+        for (let index = 0; index < decodedAnswers.length; ++index) {
+            const element = decodedAnswers[index];
+            $(`.answer[data-answer-index='${index}'] .answer-text`).text(element);
+            $(`.answer[data-answer-index='${index}']`).show();
+        }
+
+    }
 
     //...
     $.get("start-game-form-contents.html").then(html => $("#start-game-form").html(html)    //betölti a start-game-form-contents.html fájl tartalmát a játék paraméter választó formjába (start-game-form)
-        .on("submit", e => { // közvetlenül a HTML beszúrása után lácolhatjuk a 'submit' eseményre történő feliratkozást
+        .on("submit", e => { // közvetlenül a HTML beszúrása után lácolhatjuk a 'submit' eseményre történő feliratkozást   //itt iratkozunk fel a "Go!" button lenyomásra
             e.preventDefault(); // a böngésző alapértelmezett működését megállítjuk, amivel újratöltené az oldalt
             $("#start-game-form button[type='submit']").attr("disabled", true); // a Go! gombot letiltjuk, hogy ne lehessen újra API kérést indítani, amíg meg nem érkezett a válasz
             var queryString = "";
@@ -35,5 +74,6 @@ $(document).ready(function () {
                 $("#start-game-form button[type='submit']").removeAttr("disabled");
                 getNextQuestion();
             });
+            $("#start-game-form-section").hide();
         }));
 })
